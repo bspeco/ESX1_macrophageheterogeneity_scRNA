@@ -1,0 +1,53 @@
+import scanpy as sc
+import pandas as pd
+import seaborn as sns
+import bbknn
+
+sc.settings.verbosity = 1             # verbosity: errors (0), warnings (1), info (2), hints (3)
+sc.logging.print_versions()
+sc.settings.set_figure_params(dpi=80, frameon=False, figsize=(3, 3), facecolor='white')
+
+cd /mnt/ibm_lg/shoshana/Smartseq2nd
+
+adata_ref = sc.read_h5ad('10Xmice_larcluster_vF.h5ad')
+adata = sc.read_h5ad('Removeplates4272023_notannotated.h5ad')
+
+# Ingest
+
+var_names = adata_ref.var_names.intersection(adata.var_names)
+adata_ref = adata_ref[:, var_names]
+adata = adata[:, var_names]
+
+sc.pp.pca(adata_ref)
+sc.pp.neighbors(adata_ref)
+sc.tl.umap(adata_ref)
+
+sc.pl.umap(adata_ref, color='louvain')
+
+
+sc.tl.ingest(adata, adata_ref, obs='louvain')
+
+
+adata.uns['louvain_colors'] = adata_ref.uns['louvain_colors']  # fix colors
+
+
+sc.pl.umap(adata, color=['louvain', 'leiden'], wspace=0.5)
+
+
+adata_concat = adata_ref.concatenate(adata, batch_categories=['ref', 'new'])
+
+adata_concat.obs.louvain = adata_concat.obs.louvain.astype('category')
+adata_concat.obs.louvain.cat.reorder_categories(adata_ref.obs.louvain.cat.categories, inplace=True)  # fix category ordering
+adata_concat.uns['louvain_colors'] = adata_ref.uns['louvain_colors']  # fix category colors
+
+sc.pl.umap(adata_concat, color=['batch', 'louvain'])
+
+
+for batch in ['ref', 'new']:
+    sc.pl.umap(adata_concat, color='batch', groups=[batch])
+
+sc.pl.umap(adata_concat, color=['Neutro','AlvMac','MNC1','MNC2',
+                          'Mono_LycHi', 'Mono_LycLo', 'MNC_Cd11cLo', 'MNC_CD11cMed', 'MNC_CD11cHIMHCIImed', 
+                         'MNC2_CD11cHiMHCIIHi'], ncols=3, wspace=0.6)
+
+adata_concat
