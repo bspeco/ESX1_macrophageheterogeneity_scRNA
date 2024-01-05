@@ -1,0 +1,575 @@
+# Import
+import numpy as np
+import pandas as pd 
+import scipy as sp
+# pandas - creating dataframe
+import matplotlib.pyplot as plt
+import scanpy as sc
+# single cell package
+from anndata import read_h5ad
+import anndata 
+from anndata import AnnData
+from plotnine import *
+# graphing package 
+from plotnine.data import mtcars 
+import glob
+# heat map
+import seaborn as sns
+
+# magic function, important for plotting
+%matplotlib inline 
+from matplotlib import rcParams
+from matplotlib import colors
+
+# setting the plots size scanpy
+sc.settings.verbosity = 3             # verbosity: errors (0), warnings (1), info (2), hints (3)
+sc.logging.print_versions()
+sc.settings.set_figure_params(dpi=100)
+
+#import files
+gc_file_path = "GC_tables/TB_SS2_run8.csv"
+metadata_file_path = 'SS2_2022_metadatav2.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata8 = sc.AnnData(run)
+adata8 = adata8.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata8.obs['plate_ID'] = [i.split('_')[1] for i in adata8.obs.index]
+adata8.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata8.obs.index]
+adata8.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata8.obs.index] 
+
+adata8.obs.lib_plate_ID = [i.split('.')[0] for i in adata8.obs.lib_plate_ID]
+adata8.obs
+
+myList = list(set(adata8.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata8.obs['zsGreen'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata8.obs['Group'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata8.obs['alt_plate_ID'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata8.obs['Date_Infected'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata8.obs['Date_Sacrificed'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata8.obs['Date_RT'] = adata8.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata8.obs['Date_Preamp'] = adata8.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata8
+
+# run 9
+#import files
+gc_file_path = "GC_tables/TB_SS2_run9.csv"
+
+metadata_file_path = 'GC_tables/SS2_2022_metadata_simplified.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata9 = sc.AnnData(run)
+adata9 = adata9.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata9.obs['plate_ID'] = [i.split('_')[1] for i in adata9.obs.index]
+adata9.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata9.obs.index]
+adata9.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata9.obs.index] 
+
+ 
+adata9.obs
+
+adata9.obs.lib_plate_ID = [i.split('.')[0] for i in adata9.obs.lib_plate_ID]
+adata9.obs
+
+myList = list(set(adata9.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata9.obs['zsGreen'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata9.obs['Group'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata9.obs['alt_plate_ID'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata9.obs['Date_Infected'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata9.obs['Date_Sacrificed'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata9.obs['Date_RT'] = adata9.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata9.obs['Date_Preamp'] = adata9.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata9
+
+# run 7
+
+#import files
+gc_file_path = "GC_tables/TB_SS2_run7.csv"
+
+metadata_file_path = 'SS2_2022_metadatav2.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata7 = sc.AnnData(run)
+adata7 = adata7.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata7.obs['plate_ID'] = [i.split('_')[1] for i in adata7.obs.index]
+adata7.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata7.obs.index]
+adata7.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata7.obs.index] 
+
+ 
+adata7.obs
+
+adata7.obs.lib_plate_ID = [i.split('.')[0] for i in adata7.obs.lib_plate_ID]
+adata7.obs
+
+myList = list(set(adata7.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata7.obs['zsGreen'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata7.obs['Group'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata7.obs['alt_plate_ID'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata7.obs['Date_Infected'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata7.obs['Date_Sacrificed'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata7.obs['Date_RT'] = adata7.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata7.obs['Date_Preamp'] = adata7.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata7
+
+# adata 6
+
+#import files
+gc_file_path = "GC_tables/TB_SS2_run6.csv"
+
+metadata_file_path = 'SS2_2022_metadatav2.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata6 = sc.AnnData(run)
+adata6 = adata6.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata6.obs['plate_ID'] = [i.split('_')[1] for i in adata6.obs.index]
+adata6.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata6.obs.index]
+adata6.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata6.obs.index] 
+
+ 
+adata6.obs
+
+adata6.obs.lib_plate_ID = [i.split('.')[0] for i in adata6.obs.lib_plate_ID]
+adata6.obs
+
+myList = list(set(adata6.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata6.obs['zsGreen'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata6.obs['Group'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata6.obs['alt_plate_ID'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata6.obs['Date_Infected'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata6.obs['Date_Sacrificed'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata6.obs['Date_RT'] = adata6.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata6.obs['Date_Preamp'] = adata6.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata6
+
+# run 5
+
+#import files
+gc_file_path = "GC_tables/TB_SS2_run5.csv"
+
+metadata_file_path = 'SS2_2022_metadatav2.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata5 = sc.AnnData(run)
+adata5 = adata5.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata5.obs['plate_ID'] = [i.split('_')[1] for i in adata5.obs.index]
+adata5.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata5.obs.index]
+adata5.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata5.obs.index] 
+
+ 
+adata5.obs
+
+adata5.obs.lib_plate_ID = [i.split('.')[0] for i in adata5.obs.lib_plate_ID]
+adata5.obs
+
+myList = list(set(adata5.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata5.obs['zsGreen'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata5.obs['Group'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata5.obs['alt_plate_ID'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata5.obs['Date_Infected'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata5.obs['Date_Sacrificed'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata5.obs['Date_RT'] = adata5.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata5.obs['Date_Preamp'] = adata5.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata5
+
+# run 4
+
+#import files
+gc_file_path = "TB_SS2_run4.csv"
+
+metadata_file_path = 'SS2_2022_metadatav2.csv'
+meta_data = pd.read_csv(metadata_file_path,index_col='plate_ID')
+
+### subsetting out the last 5 rows
+run = pd.read_csv(gc_file_path,index_col='gene') 
+run = run.iloc[:-5]
+
+gc = pd.read_csv(gc_file_path,index_col='gene') 
+gc
+
+# making Anndata object with metadata
+adata4 = sc.AnnData(run)
+adata4 = adata4.transpose()
+# adata.transpose = flip cell x gene to gene x cell to match metadata
+adata4.obs['plate_ID'] = [i.split('_')[1] for i in adata4.obs.index]
+adata4.obs['lib_plate_ID'] = [i.split('_')[2] for i in adata4.obs.index]
+adata4.obs['well'] = [i.split('_')[0] + "_" + i.split('_')[1] for i in adata4.obs.index] 
+
+ 
+adata4.obs
+
+adata4.obs.lib_plate_ID = [i.split('.')[0] for i in adata4.obs.lib_plate_ID]
+adata4.obs
+
+myList = list(set(adata4.obs['plate_ID']))
+myList
+
+try:
+    auxdict = dict(meta_data['zsGreen'][myList])
+    adata4.obs['zsGreen'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Group'][myList])
+    adata4.obs['Group'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['alt_plate_ID'][myList])
+    adata4.obs['alt_plate_ID'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Infected'][myList])
+    adata4.obs['Date_Infected'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Sacrificed'][myList])
+    adata4.obs['Date_Sacrificed'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_RT'][myList])
+    adata4.obs['Date_RT'] = adata4.obs['plate_ID'].map(auxdict)
+    auxdict = dict(meta_data['Date_Preamp'][myList])
+    adata4.obs['Date_Preamp'] = adata4.obs['plate_ID'].map(auxdict)
+            
+    print('import complete for run')
+
+    
+except KeyError:
+    print('sorry, no metadata available for run')
+
+adata4
+
+# concat 
+adata = adata4.concatenate(adata5, adata6, adata7, adata8, adata9)
+adata
+
+adata.obs["wellnplate"]=adata.obs.index
+
+adata.obs["Index"]=[g.split("_")[0] for g in adata.obs["wellnplate"]]
+
+adata.obs=adata.obs.set_index("Index")
+
+adata.obs
+
+# bring in the other metadata and merge
+
+#Flow_MarchWT = pd.read_csv('MarchWT_All.csv')
+#Flow_MarchKO = pd.read_csv('MarchKO_All.csv')
+#Flow_MarchCtrl = pd.read_csv('MarchCtrl_All.csv')
+#Flow_FebWT = pd.read_csv('FebWT_All.csv')
+#Flow_FebKO = pd.read_csv('FebKO_All.csv')
+#Flow_FebCtrl =pd.read_csv('FebCtrl_All.csv')
+#dfs = [Flow_MarchWT, Flow_MarchKO, Flow_MarchCtrl, Flow_FebWT, Flow_FebKO, Flow_FebCtrl]
+
+df1 = pd.read_csv('Feb_ALL_no24.csv',index_col=0)
+df2 = pd.read_csv('March_All_no24.csv',index_col=0)
+df1
+
+concatenated_df = pd.concat([df1, df2], axis=0)
+concatenated_df
+#pd.merge does not work - it would not save all rows; stack did not work; tried to do this with processed object but too many cells missing so did preprocess
+
+metadata = concatenated_df.loc[adata.obs_names]
+
+merged_metadata = pd.merge(adata.obs, concatenated_df, on='well', how='left')
+
+adata.obs = merged_metadata.set_index('well')
+adata.obs
+
+#adata.obs.isna().sum()
+
+# QC
+
+# removed this per Angela: sc.pp.filter_cells(adata, min_genes=200), sc.pp.filter_genes(adata, min_cells=1)
+
+mito_genes = adata.var_names.str.startswith('mt-')
+
+sc.pp.calculate_qc_metrics(adata, percent_top=None, log1p=False, inplace=True)
+
+# for each cell compute fraction of counts in mito genes vs. all genes
+adata.obs['percent_mito'] = np.sum(
+    adata[:, mito_genes].X, axis=1) / np.sum(adata.X, axis=1)
+# add the total counts per cell as observations-annotation to adata
+adata.obs['n_counts'] = adata.X.sum(axis=1)
+
+print(sum(mito_genes))
+
+# Also calculate percent malat1
+ribo_genes = adata.var_names.str.startswith(("Rps","Rpl"))
+print(sum(ribo_genes))
+
+adata.obs['percent_ribo'] = np.sum(
+    adata[:, ribo_genes].X, axis=1) / np.sum(adata.X, axis=1)
+
+# Also calculate percent malat1
+Gm_genes = adata.var_names.str.startswith("Gm")
+print(sum(Gm_genes))
+
+adata.obs['percent_Gm'] = np.sum(
+    adata[:, Gm_genes].X, axis=1) / np.sum(adata.X, axis=1)
+
+Malat1_genes = adata.var_names.str.startswith("Malat1")
+print(sum(Malat1_genes))
+
+adata.obs['Malat1_genes'] = np.sum(
+    adata[:, Malat1_genes].X, axis=1) / np.sum(adata.X, axis=1)
+
+adata
+
+sc.pl.violin(adata, ['n_genes_by_counts'],
+             jitter=0.4, groupby = 'plate_ID', rotation=90)
+
+sc.pl.violin(adata, ['n_counts'],
+             jitter=0.4, groupby = 'plate_ID', rotation=90)
+
+sc.pl.violin(adata, ['n_genes_by_counts','n_counts', 'percent_mito'],
+             jitter=0.4, groupby = 'plate_ID', rotation=90)
+
+#In order to make a thresholding decision, take a look at the number of counts/cell
+rcParams['figure.figsize']=(20,5)
+fig_ind=np.arange(131, 134)
+fig = plt.figure()
+fig.subplots_adjust(hspace=0.4, wspace=0.6)
+p3 = sns.distplot(adata.obs['n_counts'], 
+                 kde=False, #kde=false means not normalized
+                 ax=fig.add_subplot(fig_ind[0]))
+p4 = sns.distplot(adata.obs['n_counts'][adata.obs['n_counts']<10000], 
+                 kde=False, bins=60, 
+                 ax=fig.add_subplot(fig_ind[1]))
+p5 = sns.distplot(adata.obs['n_counts'][adata.obs['n_counts']>5000000], 
+                 kde=False, bins=60, 
+                 ax=fig.add_subplot(fig_ind[2]))
+plt.show()
+
+#Thresholding decision: genes (total genes)
+rcParams['figure.figsize']=(20,5)
+fig_ind=np.arange(131, 133)
+fig = plt.figure()
+fig.subplots_adjust(hspace=0.4, wspace=0.6) #create a grid for subplots
+p6 = sns.distplot(adata.obs['n_genes_by_counts'], kde=False, bins=60, ax=fig.add_subplot(fig_ind[0]))
+p7 = sns.distplot(adata.obs['n_genes_by_counts'][adata.obs['n_genes_by_counts']<2000], 
+                 kde=False, bins=60, ax=fig.add_subplot(fig_ind[1]))
+plt.show()
+
+sc.pl.scatter(adata, x='n_counts', y='percent_mito')
+sc.pl.scatter(adata, x='n_counts', y='n_genes_by_counts')
+
+adata_no_mt = adata[:,~mito_genes].copy()
+sc.pp.filter_cells(adata_no_mt, min_genes=200)
+sc.pp.filter_cells(adata_no_mt, min_counts=2000)
+sc.pp.filter_genes(adata_no_mt, min_cells=0)
+filtered = adata[adata.obs.index.isin(adata_no_mt.obs.index)].copy()
+filtered
+
+filtered = filtered[filtered.obs['n_counts'] <= 20000000,:] 
+
+
+print('Number of cells after min count filter:{:d}'.format(filtered.n_obs))
+
+filtered = filtered[filtered.obs['percent_mito'] < 0.4]
+print('Number of cells after MT filter: {:d}'.format(filtered.n_obs))
+
+sc.pl.scatter(filtered, x='n_counts', y='percent_mito')
+sc.pl.scatter(filtered, x='n_counts', y='n_genes_by_counts')
+
+rcParams['figure.figsize']=(20,5)
+fig_ind=np.arange(131, 134)
+fig = plt.figure()
+fig.subplots_adjust(hspace=0.4, wspace=0.6)
+p3 = sns.distplot(filtered.obs['n_counts'], 
+                 kde=False, #kde=false means not normalized
+                 ax=fig.add_subplot(fig_ind[0]))
+p4 = sns.distplot(filtered.obs['n_counts'][filtered.obs['n_counts']<10000], 
+                 kde=False, bins=60, 
+                 ax=fig.add_subplot(fig_ind[1]))
+p5 = sns.distplot(filtered.obs['n_counts'][filtered.obs['n_counts']>5000000], 
+                 kde=False, bins=60, 
+                 ax=fig.add_subplot(fig_ind[2]))
+plt.show()
+
+rcParams['figure.figsize']=(20,5)
+fig_ind=np.arange(131, 133)
+fig = plt.figure()
+fig.subplots_adjust(hspace=0.4, wspace=0.6) #create a grid for subplots
+p6 = sns.distplot(filtered.obs['n_genes_by_counts'], kde=False, bins=60, ax=fig.add_subplot(fig_ind[0]))
+p7 = sns.distplot(filtered.obs['n_genes_by_counts'][filtered.obs['n_genes_by_counts']<2000], 
+                 kde=False, bins=60, ax=fig.add_subplot(fig_ind[1]))
+plt.show()
+
+filtered
+
+sc.pl.violin(filtered, ['n_genes_by_counts', 'n_counts', 'percent_mito'],
+             jitter=0.4, groupby = 'plate_ID')
+
+# calculating the fraction of samples after applying filter above
+fraction_counting = []
+for i in set(filtered.obs['plate_ID']):
+    fraction = "%.2f" % float((len(filtered[filtered.obs['plate_ID']==i]))/(len(adata[adata.obs['plate_ID']==i])))
+    if len(adata[adata.obs['plate_ID']==i]) <= 96:
+        fraction_counting.append((i,fraction,str(list(set(filtered[filtered.obs['plate_ID']==i].obs['zsGreen']))[0]),'96_well_plate'))
+    else:
+        fraction_counting.append((i,fraction,str(list(set(filtered[filtered.obs['plate_ID']==i].obs['zsGreen']))[0]),'384_well_plate'))
+fraction_df = pd.DataFrame(fraction_counting, columns =['plate_ID','fraction', 'zsGreen', 'plate_type'])
+
+filtered.obs
+
+fraction_df
+
+# Making all QC plots
+
+### Number of Reads versus Number of Genes
+g1_unfiltered = (ggplot(adata.obs, aes(x='n_genes_by_counts', y='n_counts',color='plate_ID')) + geom_point() + scale_y_log10() + geom_hline(yintercept = 5000) + geom_vline(xintercept = 500) + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title='Number of Reads versus Number of Genes (Unfiltered)', x="Number of Genes",y="Number of Reads"))
+g1_filtered = (ggplot(filtered.obs, aes(x='n_genes_by_counts', y='n_counts',color='plate_ID')) + geom_point() + scale_y_log10() + geom_hline(yintercept = 5000) + geom_vline(xintercept = 500) + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title='Number of Reads versus Number of Genes (Filtered)', x="Number of Genes",y="Number of Reads"))
+
+### Number of Reads for Each cDNA Plate
+g3_unfiltered = ggplot(adata.obs, aes(x = 'plate_ID', y = 'n_counts', fill='plate_ID')) + geom_boxplot() + scale_y_log10() + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Reads for Each cDNA Plate (Unfiltered)", x="cDNA plate", y="Number of Reads")
+g3_filtered = ggplot(filtered.obs, aes(x = 'plate_ID', y = 'n_counts', fill='plate_ID')) + geom_boxplot() + scale_y_log10() + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Reads for Each cDNA Plate (Filtered)", x="cDNA plate", y="Number of Reads")
+
+### Number of Genes for Each cDNA Plate
+g4_unfiltered = ggplot(adata.obs, aes(x = 'plate_ID', y = 'n_genes_by_counts', fill='plate_ID')) + geom_boxplot() + scale_y_log10() + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Genes for Each cDNA Plate (Unfiltered)", x="cDNA plate", y="Number of Genes")
+g4_filtered = ggplot(filtered.obs, aes(x = 'plate_ID', y = 'n_genes_by_counts', fill='plate_ID')) + geom_boxplot() + scale_y_log10() + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Genes for Each cDNA Plate (Filtered)", x="cDNA plate", y="Number of Genes")
+
+### Number of Cells for Each cDNA Plate
+g6_unfiltered = (ggplot(adata.obs, aes('plate_ID', fill='plate_ID')) + geom_bar() + geom_text(aes(label='stat(count)'),stat='count',nudge_y=0.125,va='bottom',size=6) +  theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Cells for Each cDNA Plate (Unfiltered)", x="cDNA plate"))
+g6_filtered = (ggplot(filtered.obs, aes('plate_ID', fill='plate_ID')) + geom_bar() + geom_text(aes(label='stat(count)'),stat='count',nudge_y=0.125,va='bottom',size=6) +  theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Number of Cells for Each cDNA Plate (Filtered)", x="cDNA plate"))
+
+### Fraction of Cells
+g8 = (ggplot(fraction_df, aes(x='zsGreen', y='fraction',fill='plate_ID',color='plate_type')) + geom_bar(stat="identity",position=position_dodge()) + theme(axis_text_x=element_text(rotation=90, hjust=1)) + labs(title="Fraction of Cells Passed QC in Each Tissue for Each Plate", x="zsGreen"))
+
+g8
+
+g6_filtered
+
+g4_filtered
+
+g3_filtered
+
+g1_filtered
+
+sc.pl.highest_expr_genes(filtered, n_top=20, )
+
+not_CT010467 = filtered.var.index != 'CT010467.1'
+filtered_not_CT010467 = filtered[:, not_CT010467]
+
+sc.pl.highest_expr_genes(filtered_not_CT010467, n_top=20, )
+
+filtered = filtered_not_CT010467
+filtered.layers['raw'] = filtered.X
+### wrting h5ad 
+filtered.write_h5ad('/mnt/ibm_lg/shoshana/Smartseq2nd/flowplusSS2_2022.h5ad')
+
