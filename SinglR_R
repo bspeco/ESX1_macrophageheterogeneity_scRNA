@@ -1,0 +1,119 @@
+#Load Libraries and Data
+```{r}
+.libPaths()
+```
+```{r}
+library(useful)
+library(Seurat)
+library(dplyr)
+library(Matrix)
+library(scater)
+library(loomR)
+library(patchwork)
+library(SeuratData)
+library(SeuratDisk)
+library("RColorBrewer")
+library("gplots")
+library(DESeq2)
+library(gplots)
+library(plyr)
+library(tidyverse)
+library(pheatmap)
+library(ape)
+library(SingleR)
+library(BiocParallel)
+library(celldex)
+library(scRNAseq)
+```
+
+## Load the Seurat object
+```{r}
+Convert("/hpc/projects/data_lg/shoshana/Smartseq2nd/INTEGRATEobject_Seurat.h5ad", dest = "h5seurat", overwrite = TRUE)
+adataImm <- LoadH5Seurat("/hpc/projects/data_lg/shoshana/Smartseq2nd/INTEGRATEobject_Seurat.h5seurat")
+```
+
+```{r}
+
+ImmGen <- ImmGenData()
+
+str(ImmGen)
+unique(ImmGen$label.main)
+unique(ImmGen$label.fine)
+```
+```{r}
+Idents(adataImm) <- "leiden"
+DefaultAssay(adataImm) <- "RNA"
+```
+
+```{r}
+somecells <- GetAssayData(object = adataImm, slot = "data")
+```
+
+```{r}
+cell.annot <- SingleR(test = somecells, ref = list(ImmGen=ImmGen),labels=list(ImmGen$label.main), assay.type.test = 1)
+                       
+```
+
+```{r}
+table(cell.annot$labels)
+```
+
+```{r}
+plotScoreHeatmap(cell.annot)
+```
+```{r}
+plotDeltaDistribution(cell.annot, ncol = 3)
+```
+
+```{r}
+summary(is.na(cell.annot$pruned.labels))
+```
+
+```{r}
+adataImm$singleR.label <- cell.annot$labels
+adataImm$major.label <- cell.annot$labels %>% str_remove(":.+")
+```
+
+```{r}
+SaveH5Seurat(adataImm, "/hpc/projects/data_lg/shoshana/Smartseq2nd/Immgen_Integrate.h5seurat")
+```
+
+```{r}
+Idents(adata) <- "singleR.label"
+#RunUMAP(adata, npcs = 30, verbose = FALSE)
+cluster.umap <- DimPlot(adata, reduction = "umap", label = TRUE, repel = TRUE)
+cluster.umap
+```{r}
+adata$topcells <- case_when(adata$major.label == "Granulocytes" ~ "Neutrophils", 
+                                    adata$major.label == "Neutrophils" ~ "Neutrophils", 
+                                    adata$major.label == "B cells" ~ "B cells", 
+                                    adata$major.label == "B cells, pro" ~ "B cells",
+                                    adata$major.label == "DC" ~ "Dendritic cells", 
+                                    adata$major.label == "Dendritic Cells" ~ "Dendritic cells",
+                                    adata$major.label == "Epithelial_cells" ~ "Other",
+                                    adata$major.label == "Fibroblasts" ~ "Other",
+                                    adata$major.label == "ILC" ~ "Other",
+                                    adata$major.label == "Basophils" ~ "Basophils",
+                                    adata$major.label == "Stem cells" ~ "Other",
+                                    adata$major.label == "Monocytes" ~ "Mono_Mac",
+                                    adata$major.label == "Macrophages" ~ "Alveolar Macrophages",
+                                    adata$major.label == "NK_cell" ~ "NK cell",
+                                    adata$major.label == "NKT" ~ "NK cell",
+                                    adata$major.label == "T cells" ~ "T cell", 
+                                    adata$major.label == "Tgd" ~ "T cell",
+                                    adata$major.label == "Mast Cells" ~ "Other",
+                                    adata$major.label == "Endothelial cells" ~ "Other",
+                                    adata$major.label == "Astrocytes" ~ "Other",
+                                    adata$major.label == "Cardiomyocytes" ~ "Other",
+                                    adata$major.label == "Eosinophils" ~ "Other",
+                                    adata$major.label == "Microglia" ~ "Other",
+                                    adata$major.label == "Neurons" ~ "Other",
+                                    adata$major.label == "Stromal cells" ~ "Other",
+                                    TRUE ~ "Other")
+```
+  
+```{r}
+Idents(adata) <- "topcells"
+cluster.umap <- DimPlot(adata, reduction = "umap", repel = TRUE)
+cluster.umap
+```
