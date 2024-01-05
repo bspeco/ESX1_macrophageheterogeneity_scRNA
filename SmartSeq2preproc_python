@@ -1,0 +1,244 @@
+# importing python modules
+import numpy as np
+import pandas as pd 
+import scipy as sp
+# pandas - creating dataframe
+import scanpy as sc
+# single cell package
+from anndata import read_h5ad
+import anndata
+from plotnine import *
+# graphing package 
+from plotnine.data import mtcars 
+import glob
+# heat map
+import seaborn as sns
+
+# magic function, important for plotting
+%matplotlib inline
+from matplotlib import rcParams
+from matplotlib import colors
+from matplotlib import pyplot as plt
+
+# for computing neighborhood graph/clustering
+import time
+import sys
+from math import log, ceil
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.cluster import KMeans
+from sklearn.metrics import adjusted_rand_score
+import diffxpy.api as de
+
+# setting the plots size scanpy
+sc.settings.verbosity = 3             # verbosity: errors (0), warnings (1), info (2), hints (3)
+sc.logging.print_versions()
+sc.settings.set_figure_params(dpi=100,fontsize=14)
+
+cd /mnt/ibm_lg/shoshana/Smartseq2nd
+
+adata = sc.read_h5ad('first8_ss2_2022_v2.h5ad') #run4
+adata2 = sc.read_h5ad('run5_ss2_2022_v2.h5ad')
+adata3 = sc.read_h5ad('run6_ss2_2022_v2.h5ad')
+adata4 = sc.read_h5ad('run7_ss2_2022_v2.h5ad')
+adata5 = sc.read_h5ad('run8_ss2_2022_v2.h5ad')
+adata6 = sc.read_h5ad('run9_ss2_2022.h5ad')
+adata7 = sc.read_h5ad('adataplates00_16_Littlecellfilter.h5ad') #exp1
+
+adata = adata.concatenate(adata2, adata3, adata4, adata5, adata6, adata7)
+adata
+
+adata_diffxpy = adata.copy()
+
+## Count nomalizing
+sc.pp.normalize_per_cell(adata, counts_per_cell_after=1e4)
+## log transform
+sc.pp.log1p(adata)
+#before set .raw
+adata.var
+
+#Set the .raw attribute of AnnData object to the normalized and logarithmized raw gene expression 
+#for later use in differential testing and visualizations of gene expression. 
+#This simply freezes the state of the AnnData object.
+adata.raw = adata
+
+## Annotating highly variable genes
+#sc.pp.highly_variable_genes(adata, min_mean=0.001, max_mean=10, min_disp=0.02, max_disp=10, n_bins=20, n_top_genes=None)
+sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=10, min_disp=0.02, max_disp=10, n_bins=20, n_top_genes=None)
+#(adata, subset = False, min_disp=.5, max_disp=None, min_mean=.0125, max_mean=10, n_bins=20, n_top_genes=None)
+
+sc.pl.highly_variable_genes(adata)
+
+# PCA & UMAP
+adata.obs['condition'] = ''
+for i in adata.obs.index:
+    if adata.obs.loc[i, 'plate_ID'] == 'B000000':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000001':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'   
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000002':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'   
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000003':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'       
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000005':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'       
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000006':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'   
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000008':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000009':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'   
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000010':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000996':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000997':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B000998':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002039':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002040':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002041':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002042':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112361':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'       
+    elif adata.obs.loc[i, 'plate_ID'] == 'B001939':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112559':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'      
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112494':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'        
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002059':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112474':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112485':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112561':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'       
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112488':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112555':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112472':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'           
+    elif adata.obs.loc[i, 'plate_ID'] == 'B001933':
+        adata.obs.loc[i, 'condition'] = 'KO_Infected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B002063':
+        adata.obs.loc[i, 'condition'] = 'KO_Infected'    
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112489':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112481':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112569':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112492':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'     
+    elif adata.obs.loc[i, 'plate_ID'] == 'B001935':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112560':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'      
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112490':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander' 
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112556':
+        adata.obs.loc[i, 'condition'] = 'Uninfected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112491':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'   
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112477':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112571':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'  
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112487':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112486':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112484':
+        adata.obs.loc[i, 'condition'] = 'WT_Bystander'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112476':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112557':
+        adata.obs.loc[i, 'condition'] = 'KO_Infected'    
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112562':
+        adata.obs.loc[i, 'condition'] = 'KO_Bystander'    
+    elif adata.obs.loc[i, 'plate_ID'] == 'B112566':
+        adata.obs.loc[i, 'condition'] = 'WT_Infected'
+
+## Principal component analysis
+sc.tl.pca(adata)
+## PCA overview
+sc.pl.pca_overview(adata, color='condition')
+# inspect contribution of ingle PCs to total variance in the data to get information about how many PCs are needed to compute neighborhood relations of cells
+
+sc.pl.pca_variance_ratio(adata, n_pcs=50, log=True)
+
+# umap, tsne and clustering
+
+### louvain and ledien clustering
+sc.pp.neighbors(adata, n_neighbors=10, n_pcs=15)
+sc.tl.louvain(adata, resolution = .6)
+sc.tl.leiden(adata, resolution = .6)
+
+### UMAP
+print('UMAP')
+sc.tl.umap(adata, random_state=47)
+sc.pl.umap(adata, color=['zsGreen', 'mCherry', 'louvain','leiden',
+                              'plate_ID','condition'], ncols=3, wspace=0.6)
+
+
+
+sc.pl.umap(adata, color=['plate_ID'], ncols=3, wspace=0.6)
+
+## Remove subsets with high ribosomal or mt reads for further quality control
+sc.tl.rank_genes_groups(adata, 'leiden', method='wilcoxon')
+sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+
+de_genes_df = pd.DataFrame(adata.uns['rank_genes_groups']['names'])
+de_genes_df.to_csv('leiden_allcells_022823.csv')
+
+
+# Refine Object
+
+adata2 = adata[adata.obs.leiden.isin(['0','2','3','4','5','8','9','10','11','12','13','14','15','17','18','19'])]           
+# removed 1,6,7,16
+
+sc.pl.umap(adata2, color=['zsGreen', 'mCherry', 'louvain','leiden',
+                              'plate_ID','condition'], ncols=3, wspace=0.6)
+
+## Principal component analysis
+sc.tl.pca(adata2)
+## PCA overview
+sc.pl.pca_overview(adata2, color='condition')
+# inspect contribution of ingle PCs to total variance in the data to get information about how many PCs are needed to compute neighborhood relations of cells
+
+sc.pl.pca_variance_ratio(adata2, n_pcs=50, log=True)
+
+# umap, tsne and clustering
+
+### louvain and ledien clustering
+sc.pp.neighbors(adata2, n_neighbors=10, n_pcs=19)
+sc.tl.louvain(adata2, resolution = .6)
+sc.tl.leiden(adata2, resolution = .6)
+
+### UMAP
+print('UMAP')
+sc.tl.umap(adata2, random_state=47)
+sc.pl.umap(adata2, color=['zsGreen', 'mCherry', 'louvain','leiden',
+                              'plate_ID','condition'], ncols=3, wspace=0.6)
+
+sc.tl.rank_genes_groups(adata2, 'leiden', method='wilcoxon')
+sc.pl.rank_genes_groups(adata2, n_genes=25, sharey=False)
+
+de_genes_df = pd.DataFrame(adata2.uns['rank_genes_groups']['names'])
+de_genes_df.to_csv('leiden_round2_022823.csv')
+
+adata3 = adata2[adata2.obs.leiden.isin(['0','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16'])]           
+# removed 1,17
+
+sc.pl.umap(adata3, color=['zsGreen', 'mCherry', 'louvain','leiden',
+                              'plate_ID','condition'], ncols=3, wspace=0.6)
+
+adata3.write_h5ad('refined_adata3.h5ad')
+
