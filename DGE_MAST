@@ -1,0 +1,108 @@
+```{r}
+library(scater)
+#library(loomR)
+library(Seurat)
+library(patchwork)
+  #BiocManager::install('EnhancedVolcano')
+library(EnhancedVolcano)
+library(useful)
+library(dplyr)
+library(Matrix)
+library(scater)
+library("RColorBrewer")
+library(gplots)
+library(tidyverse)
+library(pheatmap)
+library(ComplexHeatmap)
+library(MAST)
+library(EnhancedVolcano)
+```
+
+
+```{r}
+adataMNPNEW <- readRDS("/hpc/projects/genomics/shoshana/Smartseq2nd/adataMNPNEW_removeneutro.rds")
+```
+
+#all
+```{r}
+Idents(adataMNPNEW) <- "leiden"
+adataDE <- FindAllMarkers(adataMNPNEW,only.pos = TRUE, min.pct = 0.2, logfc.threshold = 0.25, return.thresh = 0.1, test.use = "MAST")
+write.csv(adataDE,'AllMarkers_MAST_MNPNew_removeneutro.csv')
+```
+
+```{r}
+adataDE %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC) -> top10
+
+# Extract the gene names from the assay
+gene_names <- rownames(adataMNPNEW@assays$RNA@counts)
+
+# Extract the expression matrix for the top 10 genes
+top10_genes <- top10$gene_names
+expression_matrix <- adataMNPNEW@assays$RNA@counts[gene_names %in% top10_genes, ]
+
+# Create the heatmap
+Heatmap(expression_matrix, name = "Expression", col = colorRamp2(c(0, 1), c("white", "blue")), show_row_names = TRUE, show_column_names = TRUE)
+```
+
+```{r}
+DoHeatmap(adataMNPNEW, features = top10$gene_names, angle = 90) + 
+  scale_fill_gradient2( low = rev(c('#d1e5f0','#67a9cf','#2166ac')), mid = "white", high = rev(c('#b2182b','#ef8a62','#fddbc7')), midpoint = 0, guide = "colourbar", aesthetics = "fill")
++ NoLegend()
+```
+
+```{r}
+adataDE %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC) -> top10
+DoHeatmap(adataMNPNEW, features = top10$gene, angle = 90) + 
+  group.colors = c('#7CCD7C','#00BFFF')) + NoLegend() + theme(text = element_text(size = 5)) + scale_fill_gradient2(low = '#009ACD', mid = '#F9F4EC', high = '#8B0A50')
++ NoLegend()
+```
+
+```{r}
+Idents(adataMNPNEW) <- "leiden"
+moMac <- subset(adataMNPNEW, idents = "moDerived Macrophage")
+Idents(moMac) <- "condition"
+```
+
+```{r}
+deg <- FindMarkers(moMac, ident.1 = "WT_Infected", ident.2 = "Uninfected", test.use = "MAST",logfc.threshold = 0)
+```
+
+```{r}
+write.csv(deg,'moMac_WTvsKO.csv')
+```
+
+```{r}
+Idents(adataMNPNEW) <- "leiden"
+```
+
+```{r}
+deg <- FindMarkers(adataMNPNEW, ident.1 = "moDerived Macrophage", ident.2 = "Immature_moDerived Macrophage", test.use = "MAST",logfc.threshold = 0)
+```
+
+```{r}
+write.csv(deg,'moDerivedvsImmatureMac.csv')
+```
+
+```{r}
+moMac<-read.csv('~/R/moDerivedvsImmatureMac.csv')
+keyvals <- ifelse(
+    moMac$avg_log2FC < -0.5, 'palegreen3',
+      ifelse(moMac$avg_log2FC > 0.5, 'deepskyblue1',
+        'black'))
+  keyvals[is.na(keyvals)] <- 'black'
+  names(keyvals)[keyvals == 'deepskyblue1'] <- 'high'
+  names(keyvals)[keyvals == 'black'] <- 'mid'
+  names(keyvals)[keyvals == 'palegreen3'] <- 'low'
+row.names(moMac) <- moMac$gene
+p1 <- EnhancedVolcano(moMac, lab = as.character(moMac$gene), x = 'avg_log2FC', y = 'p_val_adj', selectLab =    
+  rownames(moMac)[which(names(keyvals) %in% c('low','high'))], pCutoff = 0.05, FCcutoff = 0.5, colCustom = keyvals,
+  legendPosition = 'right', legendLabSize = 12, legendIconSize = 4.0)
+p1 + ggplot2::coord_cartesian(xlim=c(-2, 2)) + ggplot2::scale_x_continuous(breaks = seq(-4,4,1))
+```
+
+
+
